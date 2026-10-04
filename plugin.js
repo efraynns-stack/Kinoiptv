@@ -1,4 +1,4 @@
-// PSXtv 0.1.0. One module for Kino's QuickJS runtime; no imports or network at module load.
+// PSXtv 0.1.1. One module for Kino's QuickJS runtime; no imports or network at module load.
 // Return individual channels, rather than { playlist }, to exercise a different M3U loading path.
 const PAGE_SIZE = 100;
 const MAX_CHANNELS = 1000;
@@ -17,10 +17,11 @@ function httpUrl(value) {
 }
 
 function sources() {
-  const rows = kino.config.get("listas");
+  // Kino's app-side hosts=[] check requires top-level URL settings; nested list URLs are not counted.
+  const rows = [1, 2].map(n => ({url: kino.config.get("url" + n), nombre: kino.config.get("nombre" + n)}));
   const seen = new Set();
   const out = [];
-  for (const row of Array.isArray(rows) ? rows.slice(0, 2) : []) {
+  for (const row of rows) {
     const url = String(row.url || "").trim();
     if (!httpUrl(url) || seen.has(url)) continue;
     seen.add(url);

@@ -1,8 +1,8 @@
 {
   "id": "psxtv",
   "name": "PSXtv",
-  "version": "0.1.0",
-  "apiVersion": 4,
+  "version": "0.1.1",
+  "apiVersion": 3,
   "entry": "plugin.js",
   "description": "Prueba de dos listas IPTV M3U en En vivo, con lectura propia y sin guía XMLTV.",
   "author": "PSXtv",
@@ -11,17 +11,10 @@
   "liveStreamHosts": "any",
   "color": "#168BCA",
   "settings": [
-    {
-      "key": "listas",
-      "label": "Listas IPTV",
-      "type": "list",
-      "required": true,
-      "max": 2,
-      "fields": [
-        {"key": "nombre", "label": "Nombre", "type": "text", "required": true},
-        {"key": "url", "label": "URL M3U", "type": "url", "required": true}
-      ]
-    },
+    {"key": "nombre1", "label": "Nombre lista 1", "type": "text", "default": "PSX"},
+    {"key": "url1", "label": "URL M3U 1", "type": "url", "hint": "http://190.108.83.69:8000/playlist.m3u"},
+    {"key": "nombre2", "label": "Nombre lista 2", "type": "text", "default": "Chile"},
+    {"key": "url2", "label": "URL M3U 2", "type": "url", "hint": "https://m3u.cl/lista/CL.m3u"},
     {
       "key": "logos",
       "label": "Mostrar logos",
