@@ -1,4 +1,4 @@
-// PSXtv 0.1.1. One module for Kino's QuickJS runtime; no imports or network at module load.
+// PSXtv 0.1.3. One module for Kino's QuickJS runtime; no imports or network at module load.
 // Return individual channels, rather than { playlist }, to exercise a different M3U loading path.
 const PAGE_SIZE = 100;
 const MAX_CHANNELS = 1000;
@@ -6,6 +6,8 @@ const MAX_TEXT = 512000;
 const CACHE_BYTES = 90000; // At most two entries: leaves space below Kino's 256 KB storage cap.
 const CACHE_TTL = 15 * 60 * 1000;
 const CACHE_PREFIX = "psxtv.m3u.";
+const VERSION = "0.1.3";
+const DIAGNOSTIC_ID = "psxtv-diagnostico";
 const HEADER_NAMES = {"user-agent": "User-Agent", referer: "Referer", referrer: "Referer", origin: "Origin", cookie: "Cookie"};
 
 function digest(value) {
@@ -27,13 +29,21 @@ function sources() {
     seen.add(url);
     out.push({id: "lista-" + digest(url), url, title: String(row.nombre || "Lista IPTV").trim().slice(0, 80)});
   }
+  // A manifest hint is only a placeholder on TV; it is never a saved URL or a network grant.
+  if (!out.length) {
+    throw kino.error("auth_required", "No hay una URL M3U guardada. Abre el campo URL, escribe la dirección y guarda la configuración.");
+  }
   return out;
 }
 
 function cleanCache(lists) {
   const keep = new Set(lists.map(s => CACHE_PREFIX + s.id));
-  for (const key of kino.storage.keys()) {
-    if (key.startsWith(CACHE_PREFIX) && !keep.has(key)) kino.storage.remove(key);
+  try {
+    for (const key of kino.storage.keys()) {
+      if (key.startsWith(CACHE_PREFIX) && !keep.has(key)) kino.storage.remove(key);
+    }
+  } catch (_) {
+    kino.log("PSXtv: no se pudo limpiar la caché; se continúa con las listas configuradas.");
   }
 }
 
@@ -139,11 +149,16 @@ function parse(text, source) {
   return channels;
 }
 
-async function load(source) {
+async function load(source, fresh = false) {
   const key = CACHE_PREFIX + source.id;
-  const cached = kino.storage.get(key);
+  let cached = null;
+  if (!fresh) {
+    try { cached = kino.storage.get(key); }
+    catch (_) { kino.log("PSXtv: no se pudo leer la caché; se descargará la lista."); }
+  }
   if (cached) {
-    try { return parse(cached, source); } catch (_) { kino.storage.remove(key); }
+    try { return parse(cached, source); }
+    catch (_) { try { kino.storage.remove(key); } catch (_) {} }
   }
   const r = await kino.fetch(source.url, {timeoutMs: 12000});
   if (r.status === 401 || r.status === 403) throw kino.error("auth_required", "El servidor rechazó el acceso a la lista.");
@@ -163,15 +178,52 @@ export async function home() {
   return [];
 }
 
+function errorLabel(error) {
+  const code = error && typeof error.code === "string" && /^[a-z_]{1,32}$/.test(error.code) ? error.code : "unknown";
+  const http = error && typeof error.message === "string" ? /\(HTTP ([0-9]{3})\)/.exec(error.message) : null;
+  return http ? "HTTP " + http[1] : code;
+}
+
+function diagnosticTitle() {
+  const state = n => {
+    const value = String(kino.config.get("url" + n) || "").trim();
+    return !value ? "vacía" : httpUrl(value) ? "guardada" : "inválida";
+  };
+  const app = String(kino.appVersion || "desconocido").replace(/[\x00-\x1f\x7f]/g, "").slice(0, 32);
+  return "Prueba " + VERSION + " | Kino " + app + " | URL 1 " + state(1) + " | URL 2 " + state(2);
+}
+
 export async function liveCategories() {
   await null;
-  const lists = sources();
+  if (kino.config.get("diagnostico") === false) {
+    const lists = sources();
+    cleanCache(lists);
+    return lists.map(s => ({id: s.id, title: s.title}));
+  }
+  // A static category remains visible even if config, hashing or HTTP fails. No fake channels.
+  let title = "Prueba " + VERSION;
+  let lists;
+  try { title = diagnosticTitle(); lists = sources(); }
+  catch (error) {
+    kino.log("PSXtv: diagnóstico configuración " + errorLabel(error));
+    return [{id: DIAGNOSTIC_ID, title: (title + " | " + errorLabel(error)).slice(0, 200)}];
+  }
   cleanCache(lists);
-  return lists.map(s => ({id: s.id, title: s.title}));
+  // At most two requests, each bounded at 12 seconds, inside the 20-second category call.
+  const categories = await Promise.all(lists.map(async source => {
+    await null;
+    let result;
+    try { result = (await load(source, true)).length + " canales"; }
+    catch (error) { result = "error " + errorLabel(error); }
+    return {id: source.id, title: source.title + " — " + result};
+  }));
+  categories.push({id: DIAGNOSTIC_ID, title});
+  return categories;
 }
 
 export async function liveChannels(request) {
   await null;
+  if (request.categoryId === DIAGNOSTIC_ID) return {items: []};
   const lists = sources();
   cleanCache(lists);
   const source = lists.find(s => s.id === request.categoryId);
