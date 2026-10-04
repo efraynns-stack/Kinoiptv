@@ -1,27 +1,35 @@
 {
   "id": "psxtv",
   "name": "PSXtv",
-  "version": "0.1.3",
-  "apiVersion": 3,
+  "version": "0.2.0",
+  "apiVersion": 4,
   "entry": "plugin.js",
-  "description": "Prueba de dos listas IPTV M3U con diagnóstico de configuración y carga en En vivo, sin guía XMLTV.",
+  "description": "Carga una lista IPTV M3U y agrega más listas desde su configuración, con diagnóstico opcional y sin guía XMLTV.",
   "author": "PSXtv",
   "hosts": [],
   "capabilities": ["home", "resolve", "channels"],
   "liveStreamHosts": "any",
   "color": "#168BCA",
   "settings": [
-    {"key": "diagnostico", "label": "Mostrar diagnóstico de carga", "type": "toggle", "default": true, "hint": "Muestra la versión, las URL recibidas y el resultado de cargar cada lista."},
     {"key": "nombre1", "label": "Nombre lista 1", "type": "text", "default": "PSX"},
     {"key": "url1", "label": "URL M3U 1", "type": "url", "hint": "Sin configurar: pulsa OK y escribe la URL"},
-    {"key": "nombre2", "label": "Nombre lista 2", "type": "text", "default": "Chile"},
-    {"key": "url2", "label": "URL M3U 2", "type": "url", "hint": "Sin configurar: pulsa OK y escribe la URL"},
+    {
+      "key": "listas",
+      "label": "Más listas",
+      "type": "list",
+      "max": 9,
+      "fields": [
+        {"key": "nombre", "label": "Nombre de la lista", "type": "text", "hint": "Escribe un nombre, por ejemplo Chile"},
+        {"key": "url", "label": "URL M3U", "type": "url", "required": true, "hint": "Sin configurar: escribe la dirección de la lista"}
+      ]
+    },
     {
       "key": "logos",
       "label": "Mostrar logos",
       "type": "toggle",
       "default": false,
       "hint": "Actívalo después de comprobar la carga y reproducción."
-    }
+    },
+    {"key": "diagnostico", "label": "Mostrar diagnóstico de carga", "type": "toggle", "default": false, "hint": "Comprueba las dos primeras listas y muestra cuántas listas recibe el plugin."}
   ]
 }

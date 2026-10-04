@@ -1,12 +1,14 @@
-// PSXtv 0.1.3. One module for Kino's QuickJS runtime; no imports or network at module load.
+// PSXtv 0.2.0. One module for Kino's QuickJS runtime; no imports or network at module load.
 // Return individual channels, rather than { playlist }, to exercise a different M3U loading path.
 const PAGE_SIZE = 100;
 const MAX_CHANNELS = 1000;
 const MAX_TEXT = 512000;
-const CACHE_BYTES = 90000; // At most two entries: leaves space below Kino's 256 KB storage cap.
+const CACHE_BYTES = 90000;
+const MAX_CACHED_LISTS = 2; // Even with ten configured lists, stay below the 256 KB storage cap.
+const MAX_EXTRA_LISTS = 9;
 const CACHE_TTL = 15 * 60 * 1000;
 const CACHE_PREFIX = "psxtv.m3u.";
-const VERSION = "0.1.3";
+const VERSION = "0.2.0";
 const DIAGNOSTIC_ID = "psxtv-diagnostico";
 const HEADER_NAMES = {"user-agent": "User-Agent", referer: "Referer", referrer: "Referer", origin: "Origin", cookie: "Cookie"};
 
@@ -18,22 +20,38 @@ function httpUrl(value) {
   return /^https?:\/\/[^\s/?#]+(?:[/?#][^\s]*)?$/i.test(value);
 }
 
+function sourceRows() {
+  const first = {url: kino.config.get("url1"), nombre: kino.config.get("nombre1")};
+  const extra = kino.config.get("listas");
+  return [first, ...(Array.isArray(extra) ? extra.slice(0, MAX_EXTRA_LISTS) : [])];
+}
+
 function sources() {
   // Kino's app-side hosts=[] check requires top-level URL settings; nested list URLs are not counted.
-  const rows = [1, 2].map(n => ({url: kino.config.get("url" + n), nombre: kino.config.get("nombre" + n)}));
+  const rows = sourceRows();
   const seen = new Set();
   const out = [];
-  for (const row of rows) {
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index];
+    if (!row || typeof row !== "object") continue;
     const url = String(row.url || "").trim();
     if (!httpUrl(url) || seen.has(url)) continue;
     seen.add(url);
-    out.push({id: "lista-" + digest(url), url, title: String(row.nombre || "Lista IPTV").trim().slice(0, 80)});
+    const title = String(row.nombre || "").trim() || "Lista " + (index + 1);
+    out.push({id: "lista-" + digest(url), url, title: title.slice(0, 80)});
   }
   // A manifest hint is only a placeholder on TV; it is never a saved URL or a network grant.
   if (!out.length) {
     throw kino.error("auth_required", "No hay una URL M3U guardada. Abre el campo URL, escribe la dirección y guarda la configuración.");
   }
   return out;
+}
+
+function cacheText(key, text) {
+  // Cache only two lists. No stored value changes the person's configured entries.
+  const others = kino.storage.keys().filter(k => k.startsWith(CACHE_PREFIX) && k !== key);
+  while (others.length >= MAX_CACHED_LISTS) kino.storage.remove(others.shift());
+  kino.storage.set(key, text, {ttlMs: CACHE_TTL});
 }
 
 function cleanCache(lists) {
@@ -167,7 +185,7 @@ async function load(source, fresh = false) {
   const text = r.text();
   const channels = parse(text, source);
   if (byteLength(JSON.stringify(text)) <= CACHE_BYTES) {
-    try { kino.storage.set(key, text, {ttlMs: CACHE_TTL}); }
+    try { cacheText(key, text); }
     catch (_) { kino.log("PSXtv: no se pudo guardar la caché; se conserva la respuesta actual."); }
   }
   return channels;
@@ -185,17 +203,17 @@ function errorLabel(error) {
 }
 
 function diagnosticTitle() {
-  const state = n => {
-    const value = String(kino.config.get("url" + n) || "").trim();
-    return !value ? "vacía" : httpUrl(value) ? "guardada" : "inválida";
-  };
+  const rows = sourceRows();
+  const first = String(rows[0].url || "").trim();
+  const state = !first ? "vacía" : httpUrl(first) ? "guardada" : "inválida";
+  const urls = new Set(rows.filter(row => row && httpUrl(String(row.url || "").trim())).map(row => String(row.url).trim()));
   const app = String(kino.appVersion || "desconocido").replace(/[\x00-\x1f\x7f]/g, "").slice(0, 32);
-  return "Prueba " + VERSION + " | Kino " + app + " | URL 1 " + state(1) + " | URL 2 " + state(2);
+  return "Prueba " + VERSION + " | Kino " + app + " | URL 1 " + state + " | " + urls.size + " listas configuradas";
 }
 
 export async function liveCategories() {
   await null;
-  if (kino.config.get("diagnostico") === false) {
+  if (kino.config.get("diagnostico") !== true) {
     const lists = sources();
     cleanCache(lists);
     return lists.map(s => ({id: s.id, title: s.title}));
@@ -209,9 +227,10 @@ export async function liveCategories() {
     return [{id: DIAGNOSTIC_ID, title: (title + " | " + errorLabel(error)).slice(0, 200)}];
   }
   cleanCache(lists);
-  // At most two requests, each bounded at 12 seconds, inside the 20-second category call.
-  const categories = await Promise.all(lists.map(async source => {
+  // Check only the first two lists, so additional entries cannot exceed the call's HTTP budget.
+  const categories = await Promise.all(lists.map(async (source, index) => {
     await null;
+    if (index >= 2) return {id: source.id, title: source.title};
     let result;
     try { result = (await load(source, true)).length + " canales"; }
     catch (error) { result = "error " + errorLabel(error); }
