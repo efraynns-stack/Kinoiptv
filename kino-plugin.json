@@ -1,0 +1,33 @@
+{
+  "id": "psxtv",
+  "name": "PSXtv",
+  "version": "0.1.0",
+  "apiVersion": 4,
+  "entry": "plugin.js",
+  "description": "Prueba de dos listas IPTV M3U en En vivo, con lectura propia y sin guía XMLTV.",
+  "author": "PSXtv",
+  "hosts": [],
+  "capabilities": ["home", "resolve", "channels"],
+  "liveStreamHosts": "any",
+  "color": "#168BCA",
+  "settings": [
+    {
+      "key": "listas",
+      "label": "Listas IPTV",
+      "type": "list",
+      "required": true,
+      "max": 2,
+      "fields": [
+        {"key": "nombre", "label": "Nombre", "type": "text", "required": true},
+        {"key": "url", "label": "URL M3U", "type": "url", "required": true}
+      ]
+    },
+    {
+      "key": "logos",
+      "label": "Mostrar logos",
+      "type": "toggle",
+      "default": false,
+      "hint": "Actívalo después de comprobar la carga y reproducción."
+    }
+  ]
+}
