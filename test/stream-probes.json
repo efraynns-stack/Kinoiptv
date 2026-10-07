@@ -1,0 +1,56 @@
+[
+  {
+    "list": "PSX",
+    "channel": "13 C",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 133,
+    "redirected": false
+  },
+  {
+    "list": "PSX",
+    "channel": "A G WEST",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 133,
+    "redirected": false
+  },
+  {
+    "list": "PSX",
+    "channel": "A H L1MAX",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 133,
+    "redirected": false
+  },
+  {
+    "list": "Chile",
+    "channel": "Rewind ✪ | CL",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 154,
+    "redirected": false
+  },
+  {
+    "list": "Chile",
+    "channel": "Qultura ✪ | CL",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 152,
+    "redirected": false
+  },
+  {
+    "list": "Chile",
+    "channel": "Retro Plus TV ✪ | CL",
+    "status": 200,
+    "hls_header": true,
+    "hls_media": true,
+    "bounded_bytes": 153,
+    "redirected": false
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "appTarget": "0.9.49",
+  "pluginVersion": "0.2.0",
+  "recordedAt": "2026-10-04T22:10:10.759Z",
+  "sources": [
+    {
+      "name": "PSX",
+      "channels": 147,
+      "pages": 2
+    },
+    {
+      "name": "Chile",
+      "channels": 387,
+      "pages": 4
+    }
+  ]
+}

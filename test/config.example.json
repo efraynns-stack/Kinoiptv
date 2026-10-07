@@ -1,0 +1,7 @@
+{
+  "diagnostico": false,
+  "nombre1": "PSX",
+  "url1": "http://190.108.83.69:8000/playlist.m3u",
+  "listas": [{"nombre": "Chile", "url": "https://m3u.cl/lista/CL.m3u"}],
+  "logos": false
+}

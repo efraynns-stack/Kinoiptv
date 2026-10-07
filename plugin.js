@@ -1,4 +1,4 @@
-// PSXtv 0.2.0. One module for Kino's QuickJS runtime; no imports or network at module load.
+// PSXtv 0.2.1. One module for Kino's QuickJS runtime; no imports or network at module load.
 // Return individual channels, rather than { playlist }, to exercise a different M3U loading path.
 const PAGE_SIZE = 100;
 const MAX_CHANNELS = 1000;
@@ -8,7 +8,8 @@ const MAX_CACHED_LISTS = 2; // Even with ten configured lists, stay below the 25
 const MAX_EXTRA_LISTS = 9;
 const CACHE_TTL = 15 * 60 * 1000;
 const CACHE_PREFIX = "psxtv.m3u.";
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
+const CHILE_URL = "https://m3u.cl/lista/CL.m3u";
 const DIAGNOSTIC_ID = "psxtv-diagnostico";
 const HEADER_NAMES = {"user-agent": "User-Agent", referer: "Referer", referrer: "Referer", origin: "Origin", cookie: "Cookie"};
 
@@ -23,11 +24,15 @@ function httpUrl(value) {
 function sourceRows() {
   const first = {url: kino.config.get("url1"), nombre: kino.config.get("nombre1")};
   const extra = kino.config.get("listas");
-  return [first, ...(Array.isArray(extra) ? extra.slice(0, MAX_EXTRA_LISTS) : [])];
+  const rows = [first, ...(Array.isArray(extra) ? extra.slice(0, MAX_EXTRA_LISTS) : [])];
+  // Keep saved names and channel references when the integrated URL is already
+  // in a custom entry. Declared m3u.cl grants access without a typed URL setting.
+  if (kino.config.get("chilenos") !== false) rows.push({url: CHILE_URL, nombre: "Chile"});
+  return rows;
 }
 
 function sources() {
-  // Kino's app-side hosts=[] check requires top-level URL settings; nested list URLs are not counted.
+  // Custom URL settings grant their own servers; the integrated source has a declared host.
   const rows = sourceRows();
   const seen = new Set();
   const out = [];

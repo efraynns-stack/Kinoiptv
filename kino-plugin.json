@@ -1,16 +1,17 @@
 {
   "id": "psxtv",
   "name": "PSXtv",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apiVersion": 4,
   "entry": "plugin.js",
-  "description": "Carga una lista IPTV M3U y agrega más listas desde su configuración, con diagnóstico opcional y sin guía XMLTV.",
+  "description": "Canales chilenos con la lista de m3u.cl activada por defecto. También puedes cargar tus propias listas IPTV M3U desde la configuración.",
   "author": "PSXtv",
-  "hosts": [],
+  "hosts": ["m3u.cl"],
   "capabilities": ["home", "resolve", "channels"],
   "liveStreamHosts": "any",
   "color": "#168BCA",
   "settings": [
+    {"key": "chilenos", "label": "Canales chilenos", "type": "toggle", "default": true, "hint": "Lista Chile de m3u.cl. Desactívala para usar solo tus listas propias."},
     {"key": "nombre1", "label": "Nombre lista 1", "type": "text", "default": "PSX"},
     {"key": "url1", "label": "URL M3U 1", "type": "url", "hint": "Sin configurar: pulsa OK y escribe la URL"},
     {

@@ -1,0 +1,18 @@
+{
+  "environment": "Prelude JavaScript oficial de Kino en VM Node; sin Kotlin, JNI, QuickJS ni Android",
+  "pluginVersion": "0.2.0",
+  "appTarget": "0.9.49",
+  "checkedAt": "2026-10-04T22:12:12.228Z",
+  "configSnapshot": true,
+  "additionalListsArray": true,
+  "fetchResponseJSON": true,
+  "cryptoResponseJSON": true,
+  "serializedFunctionOutputs": true,
+  "channelCounts": [
+    147,
+    387
+  ],
+  "emptyConfigDiagnostic": true,
+  "blockedHostDiagnostic": true,
+  "cryptoFailureDiagnostic": true
+}

@@ -1,0 +1,18 @@
+{
+  "version": "0.2.1",
+  "checkedAt": "2026-10-07T06:34:00.639Z",
+  "kinoVersion": "0.9.53",
+  "source": "https://m3u.cl/lista/CL.m3u",
+  "httpStatus": 200,
+  "typedUrls": 0,
+  "categories": [
+    "Chile"
+  ],
+  "channels": 387,
+  "pages": 4,
+  "sourceReads": 1,
+  "sdkDrops": 0,
+  "resolveAccepted": true,
+  "playbackOnTvVerified": false,
+  "method": "Fresh HTTPS list downloaded with curl and passed through the SDK network gate, parser, pagination and resolver using manifest defaults."
+}
